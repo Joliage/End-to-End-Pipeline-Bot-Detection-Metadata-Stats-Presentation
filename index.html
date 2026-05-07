@@ -1,0 +1,1979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>UNESCAP Repository Analytics — MVC Web Application</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,700;0,9..40,800;1,9..40,400&family=JetBrains+Mono:wght@400;700&display=swap');
+    :root {
+      --bg:#1a0d05;--panel:rgba(255,255,255,.055);--line:rgba(255,255,255,.14);
+      --text:#fff5ec;--muted:#d4b59a;--soft:#6b4d3a;
+      --accent:#ffb088;--gold:#fbbf24;--red:#C0392B;--forest:#c2410c;--blue:#5B9BD5;
+      --shadow:0 24px 60px rgba(0,0,0,.45);--radius:10px;
+      font-family:'DM Sans',ui-sans-serif,system-ui,sans-serif;
+    }
+    *{box-sizing:border-box;}
+    html,body{height:100%;margin:0;overflow:hidden;}
+    body{color:var(--text);background:radial-gradient(circle at 18% 8%,rgba(194,65,12,.25),transparent 36%),radial-gradient(circle at 82% 6%,rgba(255,176,136,.12),transparent 30%),radial-gradient(circle at 50% 90%,rgba(251,191,36,.08),transparent 40%),linear-gradient(160deg,#1a0d05 0%,#2a1408 50%,#14080a 100%);}
+    button{font:inherit;color:inherit;}
+    .deck{height:100vh;display:grid;grid-template-rows:1fr auto;}
+    .slides{position:relative;min-height:0;}
+    .slide{position:absolute;inset:0;padding:clamp(20px,3.5vw,50px);display:grid;grid-template-rows:auto 1fr;gap:18px;opacity:0;pointer-events:none;
+      transition:opacity .55s cubic-bezier(.16,1,.3,1),transform .55s cubic-bezier(.16,1,.3,1),filter .4s ease;
+      transform:translateX(48px) scale(.97);filter:blur(6px);
+    }
+    .slide.active{opacity:1;pointer-events:auto;transform:none;filter:blur(0);}
+    .slide.active .slide-head, .slide.active .content > *{
+      animation: slideContentIn .8s cubic-bezier(.16,1,.3,1) both;
+    }
+    .slide.active .content > *:nth-child(2){animation-delay: .1s;}
+    .slide.active .content > *:nth-child(3){animation-delay: .2s;}
+    .slide.active .content > *:nth-child(4){animation-delay: .3s;}
+    @keyframes slideContentIn{
+      from{opacity:0;transform:translateY(20px);}
+      to{opacity:1;transform:none;}
+    }
+    .slide-head{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;border-bottom:1px solid var(--line);padding-bottom:14px;}
+    .kicker{margin:0 0 6px;color:var(--accent);font-size:13px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;}
+    h1,h2,h3{margin:0;letter-spacing:-.01em;}
+    h1{font-size:clamp(36px,6vw,76px);line-height:.95;max-width:960px;}
+    h2{font-size:clamp(26px,3.5vw,48px);line-height:1.05;}
+    h3{font-size:clamp(16px,1.8vw,22px);}
+    p{margin:0;color:var(--muted);font-size:clamp(15px,1.3vw,19px);line-height:1.5;}
+    .slide-no{color:var(--soft);font-weight:800;font-size:14px;white-space:nowrap;}
+    .content{min-height:0;display:grid;gap:16px;align-content:center;}
+    .two{grid-template-columns:1fr 1fr;align-items:stretch;}
+    .three{grid-template-columns:repeat(3,1fr);}
+    .four{grid-template-columns:repeat(4,1fr);}
+    .split-wide{grid-template-columns:1.1fr .9fr;}
+    .grid{display:grid;gap:14px;}
+    .panel{border:1px solid var(--line);background:var(--panel);box-shadow:var(--shadow);border-radius:var(--radius);padding:clamp(14px,1.8vw,24px);min-width:0;overflow:auto;}
+    .panel h3{margin-bottom:8px;}
+    .panel p+p{margin-top:8px;}
+    .accent-green{border-color:rgba(194,65,12,.55);}
+    .accent-moss{border-color:rgba(255,176,136,.45);}
+    .accent-orange{border-color:rgba(251,191,36,.45);}
+    .accent-red{border-color:rgba(192,57,43,.45);}
+    .hero-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px;}
+    .pill{border:1px solid var(--line);background:rgba(255,255,255,.07);border-radius:999px;padding:8px 14px;color:var(--text);font-size:14px;font-weight:700;}
+    .big-number{display:block;color:var(--text);font-size:clamp(30px,4.5vw,58px);line-height:1;font-weight:850;margin-bottom:6px;}
+    .label{color:var(--muted);font-size:14px;line-height:1.35;}
+    .list{display:grid;gap:11px;margin:0;padding:0;list-style:none;}
+    .list li{display:flex;gap:10px;color:var(--muted);line-height:1.55;font-size:clamp(13px,1.15vw,16px);}
+    .list li::before{content:"";min-width:8px;width:8px;height:8px;border-radius:50%;margin-top:8px;flex-shrink:0;background:var(--accent);box-shadow:0 0 16px rgba(255,176,136,.5);}
+    .code-block{font-family:'JetBrains Mono',monospace;background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:var(--radius);padding:14px;color:#e8dcc8;font-size:clamp(11px,.92vw,14px);line-height:1.55;white-space:pre-wrap;overflow:auto;max-height:100%;tab-size:4;}
+    .pipeline{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;}
+    .step{border:1px solid var(--line);background:rgba(255,255,255,.06);border-radius:var(--radius);padding:12px;min-height:100px;}
+    .step strong{display:block;margin-bottom:6px;color:var(--text);}
+    .step span{color:var(--muted);font-size:12px;line-height:1.35;}
+    .table{width:100%;border-collapse:collapse;color:var(--muted);font-size:clamp(13px,1.1vw,16px);}
+    .table th,.table td{text-align:left;border-bottom:1px solid var(--line);padding:10px 8px;}
+    .table th{color:var(--text);}
+
+    /* MVC arrow diagram */
+    .mvc-flow{
+      display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:12px;align-items:center;
+    }
+    .mvc-node{
+      border:2px solid var(--accent);border-radius:12px;padding:18px;
+      background:rgba(255,176,136,.05);text-align:center;
+      transition:all .3s;
+    }
+    .mvc-node h3{color:var(--accent);margin-bottom:8px;}
+    .mvc-arrow{
+      font-size:30px;color:var(--accent);text-align:center;font-weight:800;
+      animation: arrowPulse 2s ease-in-out infinite;
+    }
+    @keyframes arrowPulse{0%,100%{opacity:.5;transform:translateX(0);}50%{opacity:1;transform:translateX(4px);}}
+
+    /* ════════════════════════════════════════════════════════════
+       DEMO SLIDES — CYBER CONSOLE THEME (coral)
+       ════════════════════════════════════════════════════════════ */
+    .demo-slide{
+      --neon-cyan:#ffb088;
+      --neon-magenta:#ff7849;
+      --neon-green:#39ff14;
+      --neon-amber:#fbbf24;
+      --neon-red:#ff2d55;
+    }
+    .demo-slide .kicker{color:var(--neon-cyan);text-shadow:0 0 12px rgba(255,176,136,.5);}
+    .demo-slide h2{
+      background: linear-gradient(90deg, #fff 0%, var(--neon-cyan) 50%, var(--neon-magenta) 75%, #fff 100%);
+      background-size: 200% 100%;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: titleShimmer 6s ease-in-out infinite;
+    }
+    @keyframes titleShimmer{
+      0%,100%{background-position: 0% 50%;}
+      50%{background-position: 100% 50%;}
+    }
+    .live-dot{
+      display:inline-block;width:8px;height:8px;border-radius:50%;
+      background:var(--neon-magenta);margin-right:8px;
+      box-shadow:0 0 10px var(--neon-magenta), 0 0 20px var(--neon-magenta);
+      animation: livePulse 1.4s ease-in-out infinite;
+      vertical-align: middle;
+    }
+    @keyframes livePulse{
+      0%,100%{opacity:1;transform:scale(1);}
+      50%{opacity:.4;transform:scale(.85);}
+    }
+
+    .cyber-stage{
+      position:relative;
+      border-radius:12px;
+      padding: clamp(14px,1.8vw,20px);
+      background:
+        radial-gradient(ellipse at top right, rgba(255,176,136,.08), transparent 50%),
+        radial-gradient(ellipse at bottom left, rgba(255,120,73,.06), transparent 50%),
+        linear-gradient(180deg, #1a0d05 0%, #0d0604 100%);
+      border:1px solid rgba(255,176,136,.18);
+      box-shadow:
+        inset 0 1px 0 rgba(255,176,136,.1),
+        0 0 60px rgba(255,176,136,.08),
+        0 24px 60px rgba(0,0,0,.5);
+      overflow:hidden;
+    }
+    .cyber-grid{
+      position:absolute;inset:0;pointer-events:none;
+      background-image:
+        linear-gradient(rgba(255,176,136,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,176,136,.04) 1px, transparent 1px);
+      background-size: 32px 32px;
+      mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+      -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+    }
+
+    /* PIPELINE SIMULATOR (slide 16) */
+    .pipe-stage-grid{
+      display:grid;grid-template-columns:1fr;gap:10px;
+      position:relative;z-index:1;
+    }
+    .pipe-stages-list{
+      display:grid;grid-template-columns:repeat(6,1fr);gap:8px;
+    }
+    .pipe-stage-card{
+      border:1px solid rgba(255,176,136,.2);border-radius:10px;
+      background:rgba(0,0,0,.4);padding:12px 10px;
+      cursor:pointer;text-align:center;transition:all .3s;
+      position:relative;
+      min-height:96px;
+    }
+    .pipe-stage-card:hover{border-color:var(--neon-cyan);background:rgba(255,176,136,.05);}
+    .pipe-stage-card.active{
+      border-color:var(--neon-cyan);background:rgba(255,176,136,.1);
+      box-shadow:0 0 20px rgba(255,176,136,.3);
+    }
+    .pipe-stage-card.done{border-color:rgba(57,255,20,.4);background:rgba(57,255,20,.04);}
+    .pipe-stage-card.done::after{
+      content:"✓";position:absolute;top:6px;right:8px;
+      color:var(--neon-green);font-size:14px;font-weight:800;
+      text-shadow:0 0 6px rgba(57,255,20,.5);
+    }
+    .pipe-stage-num{
+      font-family:'JetBrains Mono',monospace;
+      color:var(--soft);font-size:10px;letter-spacing:.05em;
+    }
+    .pipe-stage-icon{font-size:24px;margin:4px 0;line-height:1;}
+    .pipe-stage-title{
+      color:var(--text);font-size:11px;font-weight:700;line-height:1.3;
+    }
+    .pipe-detail{
+      border:1px solid rgba(255,176,136,.2);border-radius:10px;
+      background:rgba(0,0,0,.5);padding:14px;
+      font-family:'JetBrains Mono',monospace;font-size:13px;
+      color:#fff5ec;
+    }
+    .pipe-detail-header{
+      display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:10px;
+      border-bottom:1px solid rgba(255,176,136,.2);
+    }
+    .pipe-detail-icon{font-size:28px;}
+    .pipe-detail-title{color:var(--neon-cyan);font-size:16px;font-weight:800;}
+    .pipe-detail-sub{color:var(--soft);font-size:11px;}
+    .pipe-io{
+      display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;
+      margin:10px 0 14px;
+    }
+    .pipe-io-cell{
+      background:rgba(0,0,0,.4);border:1px solid rgba(255,176,136,.15);border-radius:6px;
+      padding:8px 10px;
+    }
+    .pipe-io-label{color:var(--soft);font-size:10px;letter-spacing:.05em;text-transform:uppercase;}
+    .pipe-io-val{color:var(--neon-cyan);font-size:13px;margin-top:3px;word-break:break-all;}
+    .pipe-arrow{color:var(--neon-cyan);font-size:20px;text-align:center;}
+    .pipe-details-list{display:grid;gap:6px;margin-top:8px;}
+    .pipe-details-list li{
+      list-style:none;color:var(--muted);font-size:12px;
+      padding-left:18px;position:relative;line-height:1.5;
+    }
+    .pipe-details-list li::before{
+      content:"▸";position:absolute;left:4px;color:var(--neon-cyan);
+    }
+    .pipe-controls{
+      display:flex;gap:10px;justify-content:center;margin-top:12px;
+      position:relative;z-index:1;
+    }
+    .pipe-btn{
+      border:1px solid var(--neon-cyan);
+      background:linear-gradient(135deg,rgba(255,176,136,.15),rgba(255,176,136,.05));
+      color:var(--neon-cyan);
+      padding:10px 22px;border-radius:6px;cursor:pointer;
+      font-family:'JetBrains Mono',monospace;font-weight:800;letter-spacing:.05em;
+      font-size:13px;transition:all .25s;
+      text-shadow:0 0 6px rgba(255,176,136,.4);
+    }
+    .pipe-btn:hover{
+      background:linear-gradient(135deg,rgba(255,176,136,.3),rgba(255,176,136,.1));
+      box-shadow:0 0 22px rgba(255,176,136,.4);transform:translateY(-1px);
+    }
+    .pipe-btn:disabled{opacity:.4;cursor:not-allowed;}
+    .pipe-btn.reset{
+      border-color:var(--soft);color:var(--muted);text-shadow:none;
+      background:rgba(255,255,255,.04);
+    }
+
+    /* PUBLICATION SEARCH (slide 17) */
+    .pub-search-grid{
+      display:grid;grid-template-columns:1fr 1.4fr;gap:14px;
+      position:relative;z-index:1;
+    }
+    .pub-search-left, .pub-search-right{display:flex;flex-direction:column;min-height:0;}
+    .pub-input-row{display:flex;gap:10px;margin-bottom:10px;}
+    .pub-input{
+      flex:1;padding:10px 12px;border:1px solid rgba(255,176,136,.25);
+      border-radius:6px;background:rgba(0,0,0,.4);color:#fff5ec;
+      font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;
+      transition:border-color .25s;
+    }
+    .pub-input:focus{border-color:var(--neon-cyan);}
+    .pub-search-btn{
+      border:1px solid var(--neon-cyan);
+      background:linear-gradient(135deg,rgba(255,176,136,.15),rgba(255,176,136,.05));
+      color:var(--neon-cyan);padding:10px 18px;border-radius:6px;cursor:pointer;
+      font-family:'JetBrains Mono',monospace;font-weight:800;font-size:13px;
+      letter-spacing:.05em;transition:all .25s;
+      text-shadow:0 0 6px rgba(255,176,136,.4);
+    }
+    .pub-search-btn:hover{
+      background:linear-gradient(135deg,rgba(255,176,136,.3),rgba(255,176,136,.1));
+      box-shadow:0 0 22px rgba(255,176,136,.4);
+    }
+    .pub-id-list{
+      flex:1;overflow:auto;border:1px solid rgba(255,176,136,.2);
+      border-radius:8px;background:rgba(0,0,0,.4);padding:8px;
+    }
+    .pub-id-item{
+      padding:8px 10px;border-radius:5px;cursor:pointer;
+      font-family:'JetBrains Mono',monospace;font-size:11px;
+      color:var(--muted);transition:all .2s;
+      border:1px solid transparent;margin-bottom:4px;
+    }
+    .pub-id-item:hover{background:rgba(255,176,136,.06);color:var(--text);}
+    .pub-id-item.active{
+      background:rgba(255,176,136,.12);color:var(--neon-cyan);
+      border-color:rgba(255,176,136,.4);
+    }
+    .pub-result{
+      flex:1;border:1px solid rgba(255,176,136,.2);border-radius:8px;
+      background:rgba(0,0,0,.5);padding:14px;overflow:auto;
+      font-family:'JetBrains Mono',monospace;font-size:12px;
+      color:#fff5ec;line-height:1.55;
+    }
+    .pub-meta-row{
+      display:grid;grid-template-columns:120px 1fr;gap:8px;
+      padding:5px 0;border-bottom:1px solid rgba(255,176,136,.08);
+    }
+    .pub-meta-key{color:var(--neon-cyan);font-weight:700;font-size:11px;}
+    .pub-meta-val{color:#fff5ec;font-size:12px;word-break:break-word;}
+    .pub-stats-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:11px;}
+    .pub-stats-table th{
+      color:var(--neon-cyan);text-align:left;padding:6px 8px;
+      border-bottom:1px solid rgba(255,176,136,.3);
+      font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.05em;
+    }
+    .pub-stats-table td{
+      padding:5px 8px;border-bottom:1px solid rgba(255,176,136,.08);
+      font-family:'JetBrains Mono',monospace;font-size:11px;
+    }
+    .pub-stats-table .views-col{color:var(--neon-amber);}
+    .pub-stats-table .dl-col{color:var(--neon-cyan);font-weight:700;}
+
+    /* Controls */
+    .controls{height:66px;border-top:1px solid var(--line);background:rgba(0,0,0,.25);display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:0 clamp(14px,2.5vw,34px);}
+    .nav-btn{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.06);cursor:pointer;transition:all .2s;display:grid;place-items:center;}
+    .nav-btn:hover{border-color:rgba(255,176,136,.5);}
+    .progress{height:5px;border-radius:999px;background:rgba(255,255,255,.1);overflow:hidden;}
+    .progress span{display:block;height:100%;width:0%;background:linear-gradient(90deg,#c2410c,#ffb088,#fbbf24);transition:width .3s;}
+    .counter{color:var(--muted);font-weight:800;min-width:62px;text-align:right;font-size:14px;}
+    .dots{display:flex;gap:5px;justify-content:center;margin-top:8px;flex-wrap:wrap;}
+    .dot-nav{width:7px;height:7px;border:0;padding:0;border-radius:50%;background:rgba(255,255,255,.22);cursor:pointer;transition:all .2s;}
+    .dot-nav.active{background:var(--accent);transform:scale(1.3);}
+
+    @media(max-width:900px){
+      body{overflow:auto;}html,body,.deck{min-height:100%;height:auto;}
+      .slides{min-height:calc(100vh - 66px);}.slide{position:relative;display:none;min-height:calc(100vh - 66px);transform:none;filter:none;}
+      .slide.active{display:grid;}
+      .two,.three,.four,.split-wide,.pipeline,.mvc-flow,.pipe-stages-list,.pub-search-grid,.pipe-io{grid-template-columns:1fr;}
+      .controls{position:sticky;bottom:0;}
+      .mvc-arrow,.pipe-arrow{transform:rotate(90deg);}
+    }
+  </style>
+</head>
+<body>
+<div class="deck">
+<main class="slides" id="slides">
+
+  <!-- SLIDE 1 -->
+  <section class="slide active">
+    <header class="slide-head">
+      <div>
+        <p class="kicker">UNESCAP Repository Analytics — Web Application</p>
+        <h1>End-to-End Pipeline: Bot Detection → Metadata → Stats</h1>
+        <div class="hero-meta">
+          <span class="pill">Naomie Dalhia Johanne Bambara</span>
+        </div>
+      </div>
+      <div class="slide-no">01 / 32</div>
+    </header>
+    <div class="content split-wide">
+      <div class="panel accent-green">
+        <h3>Project Goal</h3>
+        <p>Build a Flask + MongoDB web application that ingests raw SOLR statistics, removes bot traffic via the IPQS API, fetches publication metadata from the UNESCAP repository API, categorizes events as VIEW or DOWNLOAD, and aggregates them into daily and monthly statistics tables — all under an MVC architecture.</p>
+      </div>
+      <div class="grid three">
+        <div class="panel"><span class="big-number">6</span><span class="label">pipeline stages</span></div>
+        <div class="panel"><span class="big-number">7</span><span class="label">MongoDB collections</span></div>
+        <div class="panel"><span class="big-number">2</span><span class="label">external APIs (IPQS + Repository)</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 2 -->
+  <section class="slide">
+    <header class="slide-head">
+      <div><p class="kicker">Overview</p><h2>Presentation Outline</h2></div>
+      <div class="slide-no">02 / 32</div>
+    </header>
+    <div class="content three">
+      <div class="panel accent-green">
+        <h3>Foundation</h3>
+        <div style="display:grid;gap:14px;margin-top:12px;">
+          <p style="white-space:nowrap;"><span style="color:var(--accent);font-weight:800;margin-right:8px;">●</span><strong>1.</strong> Project Goal &amp; Architecture</p>
+          <p style="white-space:nowrap;"><span style="color:var(--accent);font-weight:800;margin-right:8px;">●</span><strong>2.</strong> The 6-Stage Pipeline</p>
+          <p style="white-space:nowrap;"><span style="color:var(--accent);font-weight:800;margin-right:8px;">●</span><strong>3.</strong> MVC Application Structure</p>
+          <p style="white-space:nowrap;"><span style="color:var(--accent);font-weight:800;margin-right:8px;">●</span><strong>4.</strong> Database Schema</p>
+        </div>
+      </div>
+      <div class="panel accent-moss">
+        <h3>Implementation</h3>
+        <div style="display:grid;gap:14px;margin-top:12px;">
+          <p style="white-space:nowrap;"><span style="color:var(--accent);font-weight:800;margin-right:8px;">●</span><strong>5.</strong> Bot Mapping &amp; Filtering</p>
+          <p style="white-space:nowrap;"><span style="color:var(--accent);font-weight:800;margin-right:8px;">●</span><strong>6.</strong> Repository API Integration</p>
+          <p style="white-space:nowrap;"><span style="color:var(--accent);font-weight:800;margin-right:8px;">●</span><strong>7.</strong> Event Categorization (DSpace 7)</p>
+          <p style="white-space:nowrap;"><span style="color:var(--accent);font-weight:800;margin-right:8px;">●</span><strong>8.</strong> Live Demos</p>
+        </div>
+      </div>
+      <div class="panel accent-orange">
+        <h3>Results</h3>
+        <div style="display:grid;gap:14px;margin-top:12px;">
+          <p style="white-space:nowrap;"><span style="color:var(--accent);font-weight:800;margin-right:8px;">●</span><strong>9.</strong> Sample Data &amp; Output</p>
+          <p style="white-space:nowrap;"><span style="color:var(--accent);font-weight:800;margin-right:8px;">●</span><strong>10.</strong> How to Run the Application</p>
+          <p style="white-space:nowrap;"><span style="color:var(--accent);font-weight:800;margin-right:8px;">●</span><strong>11.</strong> Future Work &amp; Conclusion</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 3 -->
+  <section class="slide">
+    <header class="slide-head">
+      <div><p class="kicker">The Big Picture</p><h2>End-to-End Data Pipeline</h2></div>
+      <div class="slide-no">03 / 32</div>
+    </header>
+    <div class="content">
+      <div class="pipeline">
+        <div class="step"><strong>1. Load</strong><span>Read raw SOLR JSON (1000 records)</span></div>
+        <div class="step"><strong>2. Detect</strong><span>IPQS check for unique IPs → bot_mapping</span></div>
+        <div class="step"><strong>3. Filter</strong><span>Drop bot events → filtered_ips</span></div>
+        <div class="step"><strong>4. Enrich</strong><span>UNESCAP API → publication metadata</span></div>
+        <div class="step"><strong>5. Categorize</strong><span>VIEW vs DOWNLOAD via bundleName</span></div>
+        <div class="step"><strong>6. Aggregate</strong><span>Daily &amp; monthly stats tables</span></div>
+      </div>
+      <div class="panel accent-green" style="margin-top:14px;">
+        <h3>Key idea: don't store raw data</h3>
+        <p>The pipeline reads raw events, processes them through the stages, and only stores <strong>derived</strong> data — clean events, publication metadata, and aggregated statistics. Raw SOLR data stays in the JSON file (or, eventually, the live SOLR endpoint).</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 4 -->
+  <section class="slide">
+    <header class="slide-head">
+      <div><p class="kicker">Architecture</p><h2>Model — View — Controller</h2></div>
+      <div class="slide-no">04 / 32</div>
+    </header>
+    <div class="content">
+      <div class="mvc-flow">
+        <div class="mvc-node">
+          <h3>📦 MODEL</h3>
+          <p style="font-size:14px;">MongoDB access + business logic.</p>
+          <p style="margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent);">models/event_model.py<br/>models/publication_model.py<br/>models/publication_stats_model.py<br/>models/monthly_stats_model.py</p>
+        </div>
+        <div class="mvc-arrow">→</div>
+        <div class="mvc-node">
+          <h3>🎮 CONTROLLER</h3>
+          <p style="font-size:14px;">Flask routes, orchestrates models, returns data to views.</p>
+          <p style="margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent);">controllers/publication_controller.py<br/>controllers/stats_controller.py<br/>controllers/publication_view_controller.py</p>
+        </div>
+        <div class="mvc-arrow">→</div>
+        <div class="mvc-node">
+          <h3>🖥️ VIEW</h3>
+          <p style="font-size:14px;">HTML templates + Python formatting helpers.</p>
+          <p style="margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent);">templates/index.html<br/>views/publication_view.py</p>
+        </div>
+      </div>
+      <div class="panel accent-green" style="margin-top:14px;">
+        <p>Unlike the pure backend (Progress 3), this iteration includes a <strong>working View layer</strong>: a Flask-rendered HTML interface where users search by publication ID and see metadata + monthly stats.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 5 -->
+  <section class="slide">
+    <header class="slide-head">
+      <div><p class="kicker">Stage 1 — Raw Data</p><h2>SOLR JSON Input Structure</h2></div>
+      <div class="slide-no">05 / 32</div>
+    </header>
+    <div class="content two">
+      <div class="panel accent-green">
+        <h3>One SOLR record</h3>
+        <div class="code-block" style="font-size:12px;">{
+  "ip": "2400:1a00:b080:6caa:dd3:...",
+  "userAgent": "Mozilla/5.0 ...",
+  "isBot": false,
+  "id": "c814c4e0-f4e5-4873-...",
+  "owningItem": ["5080228a-2270-..."],
+  "owningColl": ["e5a652c3-655e-..."],
+  "owningComm": ["832fd03d-8fa8-..."],
+  "bundleName": ["ORIGINAL"],
+  "statistics_type": "view",
+  "time": "2025-04-30T18:22:11.514Z",
+  ...
+}</div>
+      </div>
+      <div class="panel">
+        <h3>Why we don't trust isBot</h3>
+        <ul class="list">
+          <li>The <code>isBot</code> field comes from SOLR's own heuristics — known to be inaccurate, especially for residential proxies and rotating VPNs</li>
+          <li>We re-classify every IP independently using IPQS for ground truth</li>
+          <li>The fields we actually rely on:
+            <ul class="list" style="margin-top:6px;">
+              <li><strong>ip</strong> — for bot detection lookup</li>
+              <li><strong>owningItem</strong> — links the event to a publication</li>
+              <li><strong>bundleName</strong> — distinguishes VIEW vs DOWNLOAD</li>
+              <li><strong>time</strong> — for daily/monthly aggregation</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 6 -->
+  <section class="slide">
+    <header class="slide-head">
+      <div><p class="kicker">Stage 2 — Bot Detection</p><h2>Smart IPQS Integration</h2></div>
+      <div class="slide-no">06 / 32</div>
+    </header>
+    <div class="content two">
+      <div class="panel accent-green">
+        <h3>Cache-aware lookup</h3>
+        <ul class="list">
+          <li><strong>Step 1.</strong> Extract unique IPs from raw_data using a Python set</li>
+          <li><strong>Step 2.</strong> Query <code>bot_mapping.distinct("ip")</code> to find IPs already classified</li>
+          <li><strong>Step 3.</strong> Compute the difference — only the new IPs need an API call</li>
+          <li><strong>Step 4.</strong> For each new IP, call IPQS, classify, and upsert into <code>bot_mapping</code></li>
+        </ul>
+      </div>
+      <div class="panel accent-moss">
+        <h3>Why this matters</h3>
+        <ul class="list">
+          <li>IPQS free tier: <strong>5,000 lookups</strong>. Naively re-checking all IPs would burn the quota in days</li>
+          <li>The cache makes the system <strong>idempotent</strong> — safe to re-run</li>
+          <li>For our 1,000-record sample: 369 unique IPs → 369 API calls on first run, <strong>0 on re-runs</strong></li>
+          <li>7 security flags checked: <code>is_vpn, is_proxy, is_tor, is_hosting, is_relay, is_mobile, is_abuse</code> — any flag = bot</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 7 -->
+  <section class="slide">
+    <header class="slide-head">
+      <div><p class="kicker">Stage 3 — Filter</p><h2>Building filtered_ips Collection</h2></div>
+      <div class="slide-no">07 / 32</div>
+    </header>
+    <div class="content two">
+      <div class="panel accent-green">
+        <h3>Filtering.py logic</h3>
+        <ul class="list">
+          <li>Load all raw events from JSON</li>
+          <li>Pre-build a fast in-memory dict: <code>{ip → is_bot}</code></li>
+          <li>For each event, check the dict — drop if bot</li>
+          <li>Insert clean events into <code>filtered_ips</code></li>
+          <li>Default: missing IP or unknown IP = treat as bot (safe default)</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>Sample run</h3>
+        <div class="code-block" style="font-size:13px;">Loaded 1000 records from JSON
+Loaded 369 bot-mapping records
+Filtering clean records: 100%
+[████████████████] 1000/1000
+
+Inserted 608 clean records into
+filtered_ips collection</div>
+        <p style="margin-top:10px;">~39% of traffic was bot-generated and removed. The remaining 608 events feed downstream stages.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 8 -->
+  <section class="slide">
+    <header class="slide-head">
+      <div><p class="kicker">Stage 4 — Enrich</p><h2>UNESCAP Repository API</h2></div>
+      <div class="slide-no">08 / 32</div>
+    </header>
+    <div class="content two">
+      <div class="panel accent-green">
+        <h3>The problem</h3>
+        <p>Raw events only contain a publication ID (<code>owningItem</code>) — no title, no author, no program of work. We need to enrich each event with full metadata before we can present meaningful stats.</p>
+        <p style="margin-top:10px;"><strong>Solution:</strong> use the public DSpace API at <code>repository.unescap.org/server/api/core/items/{id}</code> to fetch metadata per publication.</p>
+      </div>
+      <div class="panel accent-moss">
+        <h3>What we extract</h3>
+        <ul class="list">
+          <li><strong>publication</strong> — id, title, handle, dateIssued, type</li>
+          <li><strong>programs</strong> — programOfWork, areasOfWork (multiple per pub)</li>
+          <li><strong>publisher</strong> — publisher, publisherPlace, rights</li>
+          <li>Three separate MongoDB collections to keep schemas normalized</li>
+          <li>Uses <code>cloudscraper</code> to bypass DSpace's bot challenge headers</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 9 -->
+  <section class="slide">
+    <header class="slide-head">
+      <div><p class="kicker">Stage 4 details</p><h2>Sample Repository API Response</h2></div>
+      <div class="slide-no">09 / 32</div>
+    </header>
+    <div class="content two">
+      <div class="panel">
+        <h3>GET /server/api/core/items/{id}</h3>
+        <div class="code-block" style="font-size:11px;">{
+  "id": "5080228a-2270-...",
+  "handle": "20.500.12870/6128",
+  "metadata": {
+    "dc.title": [{"value": "Asia-Pacific
+       Sustainable Development Report 2025"}],
+    "dc.date.issued": [{"value": "2024-09-15"}],
+    "dc.type": [{"value": "Report"}],
+    "dc.publisher": [{"value": "United
+       Nations ESCAP"}],
+    "escap.programmeOfWork": [
+      {"value": "Environment and development"}
+    ],
+    "escap.areasOfWork": [
+      {"value": "Climate change and natural
+       resources"}
+    ]
+  }
+}</div>
+      </div>
+      <div class="panel accent-green">
+        <h3>Why three collections?</h3>
+        <ul class="list">
+          <li><strong>publication</strong> has a 1:1 relationship with a publication ID — core fields kept together</li>
+          <li><strong>programs</strong> can have multiple entries per publication (programmeOfWork + areas)</li>
+          <li><strong>publisher</strong> is conceptually distinct — it tells you who issued the work, not what the work is</li>
+          <li>Normalizing into separate collections allows independent queries and easier joins later</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 10 -->
+  <section class="slide">
+    <header class="slide-head">
+      <div><p class="kicker">Stage 5 — Categorize</p><h2>VIEW vs DOWNLOAD</h2></div>
+      <div class="slide-no">10 / 32</div>
+    </header>
+    <div class="content two">
+      <div class="panel accent-green">
+        <h3>The DSpace 7 SOLR rule</h3>
+        <ul class="list">
+          <li>SOLR statistics records have a <code>bundleName</code> field (an array of strings)</li>
+          <li>If <code>bundleName</code> contains <strong>"ORIGINAL"</strong> → it was a file download (PDF, document)</li>
+          <li>Otherwise (THUMBNAIL, empty, etc.) → it was a page view</li>
+          <li>This rule is documented in the DSpace 7 docs and confirmed by the community forum</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>Distribution in our sample</h3>
+        <div class="code-block" style="font-size:13px;">bundleName distribution (1000 records):
+
+  ORIGINAL    → 638 events (DOWNLOAD)
+  THUMBNAIL   → 256 events (VIEW)
+  (empty)     → 106 events (VIEW)
+
+After bot filtering (608 records):
+  ~388 downloads
+  ~220 views</div>
+        <p style="margin-top:10px;">Reports get downloaded more often than viewed in-browser — typical for a research repository where users save PDFs offline.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 11 -->
+  <section class="slide">
+    <header class="slide-head">
+      <div><p class="kicker">Stage 6 — Aggregate</p><h2>Daily & Monthly Stats</h2></div>
+      <div class="slide-no">11 / 32</div>
+    </header>
+    <div class="content two">
+      <div class="panel accent-moss">
+        <h3>publication_stats (daily)</h3>
+        <ul class="list">
+          <li>Schema: <code>{publication_id, date, views, downloads}</code></li>
+          <li>Built once after stages 3-5, then refreshed when new data arrives</li>
+          <li>One row per publication per day</li>
+        </ul>
+        <h3 style="margin-top:14px;">monthly_stats</h3>
+        <ul class="list">
+          <li>Schema: <code>{publication_id, year, month, views, downloads}</code></li>
+          <li>Computed by rolling up <code>publication_stats</code></li>
+          <li>This is what the web UI displays in the search result</li>
+        </ul>
+      </div>
+      <div class="panel accent-green">
+        <h3>The MongoDB pipeline</h3>
+        <ul class="list">
+          <li><strong>$unwind</strong> on <code>owningItem</code> — flatten the array</li>
+          <li><strong>$addFields</strong> — convert ISO time to Date, extract year/month</li>
+          <li><strong>$group</strong> by (publication_id, year, month)</li>
+          <li><strong>$sum</strong> with <code>$cond</code> — count views and downloads in one pass</li>
+          <li><strong>upsert</strong> into <code>monthly_stats</code> — idempotent</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 12 -->
+  <section class="slide">
+    <header class="slide-head">
+      <div><p class="kicker">Database</p><h2>MongoDB Collections</h2></div>
+      <div class="slide-no">12 / 32</div>
+    </header>
+    <div class="content">
+      <div class="pipeline" style="grid-template-columns:repeat(4,1fr);">
+        <div class="step"><strong>bot_mapping</strong><span>ip, is_bot, response. Cached IPQS results — never re-queried.</span></div>
+        <div class="step"><strong>filtered_ips</strong><span>Clean event records (non-bot raw events).</span></div>
+        <div class="step"><strong>publication</strong><span>id, title, handle, dateIssued, type. From repo API.</span></div>
+        <div class="step"><strong>programs</strong><span>publication_id, programOfWork, areasOfWork. Many per pub.</span></div>
+      </div>
+      <div class="pipeline" style="grid-template-columns:repeat(3,1fr);margin-top:10px;">
+        <div class="step"><strong>publisher</strong><span>publication_id, publisher, publisherPlace, rights.</span></div>
+        <div class="step"><strong>publication_stats</strong><span>publication_id, date, views, downloads (daily aggregation).</span></div>
+        <div class="step"><strong>monthly_stats</strong><span>publication_id, year, month, views, downloads.</span></div>
+      </div>
+      <div class="panel accent-green" style="margin-top:14px;">
+        <p>The <strong>7 collections</strong> form a layered model: caches at the bottom (bot_mapping), filtered events in the middle (filtered_ips), and aggregated outputs at the top (publication_stats, monthly_stats). The web UI only ever reads from the metadata + monthly_stats collections.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 13 -->
+  <section class="slide">
+    <header class="slide-head">
+      <div><p class="kicker">Codebase</p><h2>Project Structure</h2></div>
+      <div class="slide-no">13 / 32</div>
+    </header>
+    <div class="content two">
+      <div class="panel accent-green">
+        <div class="code-block" style="font-size:13px;">Web Application/
+├── main.py              ← Flask app entry
+├── bot_mapping.py       ← (script) IPQS lookup
+├── Filtering.py         ← (script) build filtered_ips
+├── publication_ingest.py← (script) repo API ingest
+├── .env
+├── requirements.txt
+├── data/
+│   └── data_may_01_limit_1000.json
+├── models/
+│   ├── event_model.py
+│   ├── publication_model.py
+│   ├── publication_stats_model.py
+│   └── monthly_stats_model.py
+├── controllers/
+│   ├── publication_controller.py
+│   ├── stats_controller.py
+│   └── publication_view_controller.py
+├── routes/
+│   ├── publication_routes.py
+│   ├── stats_routes.py
+│   └── health_routes.py
+├── views/
+│   └── publication_view.py
+└── templates/
+    └── index.html</div>
+      </div>
+      <div class="panel">
+        <h3>Two layers, two purposes</h3>
+        <ul class="list">
+          <li><strong>Standalone scripts</strong> — bot_mapping, Filtering, publication_ingest. Run once (or on a schedule) to prep data. They populate MongoDB.</li>
+          <li><strong>Flask app (main.py)</strong> — the live web service. On startup it runs the aggregation pipeline (idempotent), then serves search requests through the routes.</li>
+          <li><strong>MVC discipline</strong> — every controller depends on a model, never directly on PyMongo. This makes the code testable and replaceable.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 14 -->
+  <section class="slide">
+    <header class="slide-head">
+      <div><p class="kicker">Modules</p><h2>Python Modules Overview</h2></div>
+      <div class="slide-no">14 / 32</div>
+    </header>
+    <div class="content two">
+      <div class="panel accent-green">
+        <h3>📦 Model Layer</h3>
+        <ul class="list">
+          <li><strong>event_model.py</strong> — reads filtered_ips, normalizes events, applies the bundleName VIEW/DOWNLOAD rule</li>
+          <li><strong>publication_model.py</strong> — saves publication, programs, publisher to their respective collections</li>
+          <li><strong>publication_stats_model.py</strong> — builds daily aggregations grouped by (pub_id, date)</li>
+          <li><strong>monthly_stats_model.py</strong> — rolls daily stats into monthly buckets</li>
+        </ul>
+        <h3 style="margin-top:14px;">🛠️ Standalone Scripts</h3>
+        <ul class="list">
+          <li><strong>bot_mapping.py</strong> — IPQS lookups with cache, rate-limited at 1 req/sec</li>
+          <li><strong>Filtering.py</strong> — applies bot_mapping to build filtered_ips</li>
+          <li><strong>publication_ingest.py</strong> — calls repo API for each publication ID</li>
+        </ul>
+      </div>
+      <div class="panel accent-moss">
+        <h3>🎮 Controller Layer</h3>
+        <ul class="list">
+          <li><strong>publication_controller.py</strong> — combines metadata + stats for the search UI</li>
+          <li><strong>stats_controller.py</strong> — runs the full aggregation pipeline (publication_stats + monthly_stats)</li>
+          <li><strong>publication_view_controller.py</strong> — assembles the metadata payload for templates</li>
+        </ul>
+        <h3 style="margin-top:14px;">🛣️ Routes &amp; Views</h3>
+        <ul class="list">
+          <li><strong>routes/publication_routes.py</strong> — POST <code>/</code> form handler for searches</li>
+          <li><strong>routes/health_routes.py</strong> — GET <code>/health</code> JSON status</li>
+          <li><strong>routes/stats_routes.py</strong> — GET <code>/stats/&lt;pub_id&gt;</code> JSON stats endpoint</li>
+          <li><strong>templates/index.html</strong> — the search form + results page</li>
+          <li><strong>views/publication_view.py</strong> — formats publication data for the template</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 15 -->
+  <section class="slide">
+    <header class="slide-head">
+      <div><p class="kicker">Request flow</p><h2>What happens when a user searches</h2></div>
+      <div class="slide-no">15 / 32</div>
+    </header>
+    <div class="content">
+      <div class="pipeline">
+        <div class="step"><strong>1. Form Submit</strong><span>User types pub ID and clicks Search</span></div>
+        <div class="step"><strong>2. Route</strong><span>Flask <code>/</code> handler receives the POST</span></div>
+        <div class="step"><strong>3. Controller</strong><span>publication_controller.fetch_publication_data()</span></div>
+        <div class="step"><strong>4. Models</strong><span>Read publication, programs, publisher, stats</span></div>
+        <div class="step"><strong>5. Stats</strong><span>stats_controller.get_publication_stats()</span></div>
+        <div class="step"><strong>6. Render</strong><span>index.html receives result + stats dicts</span></div>
+      </div>
+      <div class="panel accent-green" style="margin-top:14px;">
+        <p>The aggregation pipeline already ran on app startup, so the search request only does fast key-based lookups. <strong>No external API calls</strong> happen during a search — the response is typically served in under 50 ms.</p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- SLIDE 16: PIPELINE SIMULATOR -->
+  <section class="slide demo-slide">
+    <header class="slide-head">
+      <div>
+        <p class="kicker"><span class="live-dot"></span>Live Demo · Pipeline Simulator</p>
+        <h2>Run the 6-Stage Pipeline</h2>
+      </div>
+      <div class="slide-no">16 / 32</div>
+    </header>
+    <div class="content">
+      <div class="cyber-stage">
+        <div class="cyber-grid"></div>
+
+        <div class="pipe-stage-grid">
+          <div class="pipe-stages-list" id="pipeStagesList">
+            <!-- populated by JS -->
+          </div>
+
+          <div class="pipe-detail" id="pipeDetail">
+            <!-- populated by JS -->
+          </div>
+
+          <div class="pipe-controls">
+            <button class="pipe-btn" id="pipePrev">◂ Prev</button>
+            <button class="pipe-btn" id="pipeRun">▸ Run All Stages</button>
+            <button class="pipe-btn" id="pipeNext">Next ▸</button>
+            <button class="pipe-btn reset" id="pipeReset">⟲ Reset</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 17: PUBLICATION SEARCH SIMULATOR -->
+  <section class="slide demo-slide">
+    <header class="slide-head">
+      <div>
+        <p class="kicker"><span class="live-dot"></span>Live Demo · Publication Search</p>
+        <h2>Search by Publication ID</h2>
+      </div>
+      <div class="slide-no">17 / 32</div>
+    </header>
+    <div class="content">
+      <div class="cyber-stage" style="min-height:520px;">
+        <div class="cyber-grid"></div>
+
+        <div class="pub-search-grid">
+          <div class="pub-search-left">
+            <p style="color:var(--neon-cyan);font-family:'JetBrains Mono',monospace;font-size:11px;margin-bottom:6px;letter-spacing:.05em;">// SAMPLE PUBLICATION IDs</p>
+            <div class="pub-id-list" id="pubIdList"></div>
+          </div>
+
+          <div class="pub-search-right">
+            <div class="pub-input-row">
+              <input type="text" id="pubInput" class="pub-input" placeholder="Enter publication ID..." spellcheck="false"/>
+              <button class="pub-search-btn" onclick="searchPub()">SEARCH</button>
+            </div>
+            <div class="pub-result" id="pubResult">// click an ID on the left or type one and press SEARCH</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 18: BOT MAPPING SAMPLE -->
+  <section class="slide">
+    <header class="slide-head">
+      <div><p class="kicker">Sample data</p><h2>bot_mapping Collection</h2></div>
+      <div class="slide-no">18 / 32</div>
+    </header>
+    <div class="content two">
+      <div class="panel">
+        <h3>Sample rows</h3>
+        <table class="table" id="botMappingTable">
+          <thead><tr><th>IP Address</th><th style="text-align:center;">is_bot</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="panel accent-green">
+        <h3>What gets stored</h3>
+        <ul class="list">
+          <li><strong>ip</strong> — the IP address (key)</li>
+          <li><strong>is_bot</strong> — boolean computed from the 7 IPQS flags</li>
+          <li><strong>response</strong> — full IPQS API payload (audit trail)</li>
+        </ul>
+        <h3 style="margin-top:14px;">Why store the full response?</h3>
+        <ul class="list">
+          <li>If we change the bot decision logic later (e.g. weight is_relay differently), we can re-classify <strong>without re-querying the API</strong></li>
+          <li>The cached response includes geolocation and ASN — useful for future analytics</li>
+          <li>Free tier: 5,000 lookups. The cache means we never spend a lookup twice</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 19: filtered_ips -->
+  <section class="slide">
+    <header class="slide-head">
+      <div><p class="kicker">Sample data</p><h2>filtered_ips Collection</h2></div>
+      <div class="slide-no">19 / 32</div>
+    </header>
+    <div class="content two">
+      <div class="panel">
+        <h3>One filtered_ips document</h3>
+        <div class="code-block" style="font-size:11px;">{
+  "_id": ObjectId("...."),
+  "ip": "2400:1a00:b080:6caa:dd3:...",
+  "userAgent": "Mozilla/5.0 ... Chrome/135.0.0.0",
+  "isBot": false,
+  "id": "c814c4e0-f4e5-4873-...",
+  "owningItem": ["5080228a-2270-4f64-b548-..."],
+  "owningColl": ["e5a652c3-655e-4da9-..."],
+  "owningComm": ["832fd03d-8fa8-4250-..."],
+  "bundleName": ["ORIGINAL"],
+  "statistics_type": "view",
+  "time": "2025-04-30T18:22:11.514Z"
+}</div>
+      </div>
+      <div class="panel accent-green">
+        <h3>What changed from raw_data?</h3>
+        <ul class="list">
+          <li>Schema is identical — we keep <strong>all original fields</strong></li>
+          <li>The collection only contains events whose IP was classified as <strong>not a bot</strong></li>
+          <li>Downstream stages (categorization, aggregation) read from this collection, not from the raw JSON</li>
+        </ul>
+        <h3 style="margin-top:14px;">Volume</h3>
+        <ul class="list">
+          <li>Raw input: <strong>1,000 events</strong></li>
+          <li>After filtering: <strong>608 events</strong></li>
+          <li>Reduction: <strong>~39%</strong> bot traffic removed</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 20: PUBLICATION SAMPLE -->
+  <section class="slide">
+    <header class="slide-head">
+      <div><p class="kicker">Sample data</p><h2>publication, programs, publisher</h2></div>
+      <div class="slide-no">20 / 32</div>
+    </header>
+    <div class="content three">
+      <div class="panel accent-green">
+        <h3>publication</h3>
+        <div class="code-block" style="font-size:11px;">{
+  "id": "5080228a-2270-...",
+  "title": "Asia-Pacific
+   Sustainable Development
+   Report 2025",
+  "handle": "20.500.12870/6128",
+  "dateIssued": "2024-09-15",
+  "type": "Report"
+}</div>
+      </div>
+      <div class="panel accent-moss">
+        <h3>programs</h3>
+        <div class="code-block" style="font-size:11px;">{
+  "publication_id":
+   "5080228a-2270-...",
+  "programOfWork":
+   "Environment and
+   development",
+  "areasOfWork": [
+   "Climate change and
+    natural resources",
+   "Sustainable urban
+    development"
+  ]
+}</div>
+      </div>
+      <div class="panel accent-orange">
+        <h3>publisher</h3>
+        <div class="code-block" style="font-size:11px;">{
+  "publication_id":
+   "5080228a-2270-...",
+  "publisher":
+   "United Nations
+    ESCAP",
+  "publisherPlace":
+   "Bangkok, Thailand",
+  "rights": "CC BY-NC-ND
+    3.0 IGO"
+}</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 21: DAILY STATS -->
+  <section class="slide">
+    <header class="slide-head">
+      <div><p class="kicker">Sample data</p><h2>publication_stats — Daily Aggregation</h2></div>
+      <div class="slide-no">21 / 32</div>
+    </header>
+    <div class="content">
+      <div class="panel" style="overflow:auto;">
+        <table class="table">
+          <thead><tr><th>Publication ID</th><th>Date</th><th style="text-align:right;">Views</th><th style="text-align:right;">Downloads</th></tr></thead>
+          <tbody id="dailyTable"></tbody>
+        </table>
+      </div>
+      <div class="panel accent-green" style="margin-top:14px;">
+        <p>Daily granularity is preserved for fine-grained analysis (e.g., spike detection, weekly trends). The web UI rolls these up to monthly buckets to keep the table readable.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 22: MONTHLY STATS -->
+  <section class="slide">
+    <header class="slide-head">
+      <div><p class="kicker">Sample data</p><h2>monthly_stats — What the UI Shows</h2></div>
+      <div class="slide-no">22 / 32</div>
+    </header>
+    <div class="content">
+      <div class="panel" style="overflow:auto;">
+        <table class="table">
+          <thead><tr><th>Publication</th><th>Month</th><th style="text-align:right;">Views</th><th style="text-align:right;">Downloads</th></tr></thead>
+          <tbody id="monthlyTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 23: WEB UI MOCKUP -->
+  <section class="slide">
+    <header class="slide-head">
+      <div><p class="kicker">Web Interface</p><h2>UNESCAP Publication Viewer</h2></div>
+      <div class="slide-no">23 / 32</div>
+    </header>
+    <div class="content two">
+      <div class="panel accent-green">
+        <h3>Two boxes side by side</h3>
+        <ul class="list">
+          <li><strong>Search Publication</strong> — text input + Search button. POSTs to <code>/</code></li>
+          <li><strong>Service Health</strong> — Check Health button calls <code>/health</code> via fetch and displays the JSON response</li>
+          <li>If a search returns a result, the page renders the metadata + monthly stats table below</li>
+          <li>If the publication ID is unknown, an error message is displayed</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>Endpoints exposed</h3>
+        <ul class="list">
+          <li><code>GET /</code> — search form</li>
+          <li><code>POST /</code> — search submission, renders results inline</li>
+          <li><code>GET /health</code> — JSON status check</li>
+          <li><code>GET /stats/&lt;pub_id&gt;</code> — JSON stats endpoint (alternative to UI)</li>
+        </ul>
+        <p style="margin-top:10px;color:var(--soft);font-size:13px;">All HTML templating is server-side via Flask + Jinja2. No JavaScript framework needed.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 24: CATEGORIZATION RESEARCH -->
+  <section class="slide">
+    <header class="slide-head">
+      <div><p class="kicker">Research Notes</p><h2>How DSpace 7 Categorizes Events</h2></div>
+      <div class="slide-no">24 / 32</div>
+    </header>
+    <div class="content two">
+      <div class="panel accent-green">
+        <h3>Sources investigated</h3>
+        <ul class="list">
+          <li><strong>DSpace 7 official docs</strong> — Statistics &amp; Reporting section</li>
+          <li><strong>DSpace community forum</strong> (groups.google.com) — many threads on bundleName meaning</li>
+          <li><strong>DSpace GitHub</strong> — source of <code>SolrLoggerServiceImpl</code></li>
+          <li><strong>The actual SOLR data</strong> — empirical analysis of the bundleName values present</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>What the data confirms</h3>
+        <ul class="list">
+          <li><code>statistics_type</code> alone is not enough — almost every record is "view" (995/1000 in our sample)</li>
+          <li>The real distinguisher is <code>bundleName</code>:
+            <ul class="list" style="margin-top:6px;">
+              <li><strong>ORIGINAL</strong> — bitstream download (PDF, document, dataset)</li>
+              <li><strong>THUMBNAIL</strong> — thumbnail image fetch (counts as a view)</li>
+              <li><strong>(empty)</strong> — landing page view (counts as a view)</li>
+            </ul>
+          </li>
+          <li>Other possible bundles (LICENSE, TEXT, BRANDED_PREVIEW) are rare in the public-facing repo</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 25: ROBUSTNESS -->
+  <section class="slide">
+    <header class="slide-head">
+      <div><p class="kicker">Robustness</p><h2>Error Handling &amp; Rate Limiting</h2></div>
+      <div class="slide-no">25 / 32</div>
+    </header>
+    <div class="content three">
+      <div class="panel accent-orange">
+        <h3>API failures</h3>
+        <p>If the IPQS call times out or returns an error, the IP is recorded as <strong>is_bot=True</strong> (safe default) with the exception stored in the response field for later debugging.</p>
+      </div>
+      <div class="panel accent-moss">
+        <h3>Rate limiting</h3>
+        <p>1.0-second sleep between IPQS API calls — measured against elapsed time so we don't accidentally sleep too long. Keeps us under the free-tier rate limit comfortably.</p>
+      </div>
+      <div class="panel accent-green">
+        <h3>Cloudscraper for repo</h3>
+        <p>The UNESCAP repository sits behind a Cloudflare bot challenge. <strong>cloudscraper</strong> emulates a Chrome browser to pass the JS challenge and retrieve metadata reliably.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 26: PERFORMANCE -->
+  <section class="slide">
+    <header class="slide-head">
+      <div><p class="kicker">Performance</p><h2>What Takes Time, What Doesn't</h2></div>
+      <div class="slide-no">26 / 32</div>
+    </header>
+    <div class="content three">
+      <div class="panel accent-orange">
+        <span class="big-number">~6 min</span>
+        <span class="label">First-time bot mapping for 369 IPs (1 sec/IP rate-limited)</span>
+      </div>
+      <div class="panel accent-moss">
+        <span class="big-number">~8 min</span>
+        <span class="label">Publication ingest for 465 unique items (1 sec polite delay)</span>
+      </div>
+      <div class="panel accent-green">
+        <span class="big-number">&lt;30 ms</span>
+        <span class="label">Per search request once data is loaded</span>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:14px;">
+      <p>The slow stages are <strong>one-time setup</strong>. Once <code>bot_mapping</code> and the publication metadata are populated, the application serves search requests instantly. Re-running the scripts is cheap because the cache + skip-existing logic skip everything already done.</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 27: HOW TO RUN -->
+  <section class="slide">
+    <header class="slide-head">
+      <div><p class="kicker">How to Run</p><h2>Setup Sequence</h2></div>
+      <div class="slide-no">27 / 32</div>
+    </header>
+    <div class="content two">
+      <div class="panel accent-green">
+        <h3>1. Environment</h3>
+        <div class="code-block" style="font-size:13px;">python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+# Edit .env:
+#   MONGO_URI=mongodb://localhost:27017
+#   DB_NAME=solr_statistics_dbS
+#   ABSTRACT_API_KEY=&lt;your_key&gt;
+#   REPOSITORY_API_BASE=
+#     https://repository.unescap.org/server/api/core/items/</div>
+      </div>
+      <div class="panel">
+        <h3>2. Run pipeline scripts in order</h3>
+        <div class="code-block" style="font-size:13px;">python bot_mapping.py
+# → builds bot_mapping collection
+
+python Filtering.py
+# → builds filtered_ips collection
+
+python publication_ingest.py
+# → builds publication, programs, publisher
+
+python main.py
+# → starts Flask server
+# → auto-runs aggregation pipeline
+# → http://127.0.0.1:5000</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 28: TRY THE LIVE APP -->
+  <section class="slide">
+    <header class="slide-head">
+      <div><p class="kicker">Sample IDs</p><h2>Publication IDs to test</h2></div>
+      <div class="slide-no">28 / 32</div>
+    </header>
+    <div class="content two">
+      <div class="panel accent-green">
+        <h3>Test publication IDs</h3>
+        <div class="code-block" style="font-size:13px;">57d0c09f-d91c-403c-a486-059220e8a677
+
+183abd46-91f4-4580-8fe8-ff730e851573
+
+aa30069f-c1af-4639-b6ae-00cea161c776</div>
+        <p style="margin-top:10px;">Type one of these into the search box on the home page and click Search to see the metadata + monthly stats.</p>
+      </div>
+      <div class="panel">
+        <h3>Demo workflow</h3>
+        <ul class="list">
+          <li>Open <code>http://127.0.0.1:5000</code></li>
+          <li>Click <strong>Check Health</strong> first — confirms the Flask server is live</li>
+          <li>Paste a publication ID into the search box</li>
+          <li>The result panel shows publication metadata, programs, publisher, and a monthly stats table</li>
+          <li>Try an invalid ID to see the error path</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 29: REQUIREMENTS -->
+  <section class="slide">
+    <header class="slide-head">
+      <div><p class="kicker">Stack</p><h2>Dependencies</h2></div>
+      <div class="slide-no">29 / 32</div>
+    </header>
+    <div class="content two">
+      <div class="panel accent-green">
+        <h3>requirements.txt</h3>
+        <div class="code-block" style="font-size:14px;">flask
+pymongo
+requests
+cloudscraper
+tqdm
+python-dotenv
+selenium</div>
+      </div>
+      <div class="panel">
+        <h3>Why each</h3>
+        <ul class="list">
+          <li><strong>flask</strong> — web framework, MVC routing</li>
+          <li><strong>pymongo</strong> — MongoDB driver</li>
+          <li><strong>requests</strong> — HTTP client for IPQS</li>
+          <li><strong>cloudscraper</strong> — bypasses Cloudflare on UNESCAP repo API</li>
+          <li><strong>tqdm</strong> — progress bars during long-running ingest</li>
+          <li><strong>python-dotenv</strong> — load .env config without hardcoding secrets</li>
+          <li><strong>selenium</strong> — fallback browser automation if cloudscraper fails (currently unused)</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 30: FUTURE WORK -->
+  <section class="slide">
+    <header class="slide-head">
+      <div><p class="kicker">Roadmap</p><h2>Next Steps</h2></div>
+      <div class="slide-no">30 / 32</div>
+    </header>
+    <div class="content two">
+      <div class="panel accent-moss">
+        <h3>Short term</h3>
+        <ul class="list">
+          <li><strong>Live SOLR connection</strong> — replace the JSON file with a streamed query against the DSpace SOLR endpoint</li>
+          <li><strong>Auto-incremental ingest</strong> — only process new events since the last run, using a timestamp checkpoint</li>
+          <li><strong>JSON API endpoints</strong> — wire <code>routes/stats_routes.py</code> into <code>main.py</code> so external dashboards can consume the data</li>
+          <li><strong>Top-N queries</strong> — most-downloaded publications per month, per program of work</li>
+        </ul>
+      </div>
+      <div class="panel accent-orange">
+        <h3>Long term</h3>
+        <ul class="list">
+          <li><strong>Division dashboard</strong> — per-division views and downloads, drill-down by program of work</li>
+          <li><strong>Charts in the UI</strong> — line and bar charts for monthly trends</li>
+          <li><strong>Authentication</strong> — protect division-specific views</li>
+          <li><strong>Export</strong> — CSV/Excel download of stats for stakeholders</li>
+          <li><strong>Async ingest</strong> — parallelize repo API calls (with backoff) to cut publication_ingest.py from minutes to seconds</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 31: KEY TAKEAWAYS -->
+  <section class="slide">
+    <header class="slide-head">
+      <div><p class="kicker">Summary</p><h2>What Was Delivered</h2></div>
+      <div class="slide-no">31 / 32</div>
+    </header>
+    <div class="content two">
+      <div class="panel accent-green">
+        <h3>Deliverables</h3>
+        <ul class="list">
+          <li>✓ Full <strong>MVC Flask application</strong> with Model, View, and Controller layers</li>
+          <li>✓ <strong>3 standalone scripts</strong> (bot_mapping, Filtering, publication_ingest) that prepare the database</li>
+          <li>✓ <strong>Auto-running aggregation pipeline</strong> on Flask startup (idempotent)</li>
+          <li>✓ <strong>7 MongoDB collections</strong> with normalized schemas</li>
+          <li>✓ <strong>Working web UI</strong> with search + health endpoints</li>
+          <li>✓ <strong>DSpace 7 categorization</strong> rule applied (bundleName-based)</li>
+        </ul>
+      </div>
+      <div class="panel accent-moss">
+        <h3>Architecture wins</h3>
+        <ul class="list">
+          <li><strong>Cache-aware bot mapping</strong> — saves the IPQS free-tier quota across runs</li>
+          <li><strong>Idempotent scripts</strong> — re-running never duplicates data thanks to upsert</li>
+          <li><strong>Layered model</strong> — raw → filtered → categorized → aggregated, each layer derives from the previous one</li>
+          <li><strong>Cloudscraper integration</strong> — robust against the UNESCAP repo's bot challenge</li>
+          <li><strong>End-to-end pipeline</strong> — from a bare JSON file to a live searchable web UI</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 32: THANK YOU -->
+  <section class="slide">
+    <header class="slide-head">
+      <div><p class="kicker">End of Presentation</p><h2>Questions?</h2></div>
+      <div class="slide-no">32 / 32</div>
+    </header>
+    <div class="content split-wide">
+      <div class="panel accent-green">
+        <h3>The Big Picture</h3>
+        <p>This Web Application closes the loop on the IPQS bot-detection work: it takes <strong>raw SOLR statistics</strong>, removes bot noise, fetches authoritative <strong>publication metadata</strong> from the UNESCAP repository API, categorizes events as views or downloads, and aggregates everything into clean tables ready for the front end.</p>
+        <p style="margin-top:10px;">All under an MVC architecture so each piece can be maintained, tested, and extended independently.</p>
+      </div>
+      <div class="grid three">
+        <div class="panel"><span class="big-number">6</span><span class="label">pipeline stages</span></div>
+        <div class="panel"><span class="big-number">7</span><span class="label">collections</span></div>
+        <div class="panel"><span class="big-number">2</span><span class="label">live demos</span></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<nav class="controls">
+  <button class="nav-btn" id="prev">&lt;</button>
+  <div><div class="progress"><span id="progressBar"></span></div><div class="dots" id="dots"></div></div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <span class="counter" id="counter">1 / 32</span>
+    <button class="nav-btn" id="next">&gt;</button>
+  </div>
+</nav>
+</div>
+
+<script>
+const MOCK = {
+  "publications": [
+    {
+      "id": "cced48c6-99ad-43a9-af45-f714527fbcc8",
+      "title": "Asia-Pacific Sustainable Development Report 2025",
+      "handle": "20.500.12870/6000",
+      "dateIssued": "2024-01-15",
+      "type": "Report",
+      "programOfWork": "Macroeconomic policy and financing for development",
+      "areaOfWork": "Inclusive and sustainable economic growth",
+      "publisher": "United Nations ESCAP",
+      "publisherPlace": "Bangkok, Thailand"
+    },
+    {
+      "id": "526b1c48-c552-41d5-adb6-f1c8079b38ed",
+      "title": "Trade Facilitation Benchmark in ESCAP Region",
+      "handle": "20.500.12870/6007",
+      "dateIssued": "2024-02-15",
+      "type": "Working Paper",
+      "programOfWork": "Trade, investment and innovation",
+      "areaOfWork": "Sustainable trade and investment",
+      "publisher": "United Nations ESCAP",
+      "publisherPlace": "Bangkok, Thailand"
+    },
+    {
+      "id": "431f26a3-ffbd-4de1-baed-6318781adcb6",
+      "title": "Climate Action Roadmap for Pacific SIDS",
+      "handle": "20.500.12870/6014",
+      "dateIssued": "2024-03-15",
+      "type": "Policy Brief",
+      "programOfWork": "Transport",
+      "areaOfWork": "Sustainable urban development",
+      "publisher": "United Nations ESCAP",
+      "publisherPlace": "Bangkok, Thailand"
+    },
+    {
+      "id": "4a60d8c9-b54c-48c6-b737-d83c239bd194",
+      "title": "Energy Transition Pathways: 2024 Update",
+      "handle": "20.500.12870/6021",
+      "dateIssued": "2024-04-15",
+      "type": "Book",
+      "programOfWork": "Environment and development",
+      "areaOfWork": "Climate change and natural resources",
+      "publisher": "United Nations ESCAP",
+      "publisherPlace": "Bangkok, Thailand"
+    },
+    {
+      "id": "44b0bd72-a348-4a4d-966e-63f5b33f02ac",
+      "title": "Statistical Yearbook for Asia and the Pacific",
+      "handle": "20.500.12870/6028",
+      "dateIssued": "2024-05-15",
+      "type": "Article",
+      "programOfWork": "Information and communications technology, science, technology and innovation, and disaster risk reduction",
+      "areaOfWork": "Disaster risk reduction",
+      "publisher": "United Nations ESCAP",
+      "publisherPlace": "Bangkok, Thailand"
+    },
+    {
+      "id": "5ca00e45-e035-492f-9b4d-780212ea100c",
+      "title": "Disaster Risk Reduction in Coastal Communities",
+      "handle": "20.500.12870/6035",
+      "dateIssued": "2024-06-15",
+      "type": "Report",
+      "programOfWork": "Social development",
+      "areaOfWork": "Population dynamics and ageing societies",
+      "publisher": "United Nations ESCAP",
+      "publisherPlace": "Bangkok, Thailand"
+    },
+    {
+      "id": "5b53e05a-74b2-43f3-befa-c13b69ab1b0a",
+      "title": "FDI Trends in South-East Asia",
+      "handle": "20.500.12870/6042",
+      "dateIssued": "2024-07-15",
+      "type": "Working Paper",
+      "programOfWork": "Statistics",
+      "areaOfWork": "Statistics for SDGs",
+      "publisher": "United Nations ESCAP",
+      "publisherPlace": "Bangkok, Thailand"
+    },
+    {
+      "id": "eeeac0ad-56a7-480d-8399-fead8ea9c038",
+      "title": "Aging Population Policy Brief",
+      "handle": "20.500.12870/6049",
+      "dateIssued": "2024-08-15",
+      "type": "Policy Brief",
+      "programOfWork": "Energy",
+      "areaOfWork": "Sustainable energy transition",
+      "publisher": "United Nations ESCAP",
+      "publisherPlace": "Bangkok, Thailand"
+    },
+    {
+      "id": "039dacdc-f613-4bee-802a-3b2c295a2591",
+      "title": "Smart Cities Index \u2014 Asian Edition",
+      "handle": "20.500.12870/6056",
+      "dateIssued": "2024-09-15",
+      "type": "Book",
+      "programOfWork": "Macroeconomic policy and financing for development",
+      "areaOfWork": "Inclusive and sustainable economic growth",
+      "publisher": "United Nations ESCAP",
+      "publisherPlace": "Bangkok, Thailand"
+    },
+    {
+      "id": "fd699a5d-5ce2-4b46-9de8-fe099dda4dbc",
+      "title": "Renewable Energy Investment Annual Report",
+      "handle": "20.500.12870/6063",
+      "dateIssued": "2024-10-15",
+      "type": "Article",
+      "programOfWork": "Trade, investment and innovation",
+      "areaOfWork": "Sustainable trade and investment",
+      "publisher": "United Nations ESCAP",
+      "publisherPlace": "Bangkok, Thailand"
+    },
+    {
+      "id": "9164405a-f58c-4f9b-9d14-76e30eb786ad",
+      "title": "Cross-Border Transport Infrastructure Survey",
+      "handle": "20.500.12870/6070",
+      "dateIssued": "2024-11-15",
+      "type": "Report",
+      "programOfWork": "Transport",
+      "areaOfWork": "Sustainable urban development",
+      "publisher": "United Nations ESCAP",
+      "publisherPlace": "Bangkok, Thailand"
+    },
+    {
+      "id": "cb8358b0-b1a7-4303-aa7b-ffb9e6607910",
+      "title": "SDG Progress Indicators 2025",
+      "handle": "20.500.12870/6077",
+      "dateIssued": "2024-12-15",
+      "type": "Working Paper",
+      "programOfWork": "Environment and development",
+      "areaOfWork": "Climate change and natural resources",
+      "publisher": "United Nations ESCAP",
+      "publisherPlace": "Bangkok, Thailand"
+    },
+    {
+      "id": "951f4b4c-f147-4615-af2b-c54daf66746c",
+      "title": "Gender Equality and Women's Empowerment Report",
+      "handle": "20.500.12870/6084",
+      "dateIssued": "2024-01-15",
+      "type": "Policy Brief",
+      "programOfWork": "Information and communications technology, science, technology and innovation, and disaster risk reduction",
+      "areaOfWork": "Disaster risk reduction",
+      "publisher": "United Nations ESCAP",
+      "publisherPlace": "Bangkok, Thailand"
+    },
+    {
+      "id": "36c284e7-fa1f-4ba0-81dc-c2cebef7955f",
+      "title": "Digital Economy Outlook for the Region",
+      "handle": "20.500.12870/6091",
+      "dateIssued": "2024-02-15",
+      "type": "Book",
+      "programOfWork": "Social development",
+      "areaOfWork": "Population dynamics and ageing societies",
+      "publisher": "United Nations ESCAP",
+      "publisherPlace": "Bangkok, Thailand"
+    },
+    {
+      "id": "379e0dc5-4c18-47a8-b824-4b895e67151e",
+      "title": "Ocean Economy and Blue Finance",
+      "handle": "20.500.12870/6098",
+      "dateIssued": "2024-03-15",
+      "type": "Article",
+      "programOfWork": "Statistics",
+      "areaOfWork": "Statistics for SDGs",
+      "publisher": "United Nations ESCAP",
+      "publisherPlace": "Bangkok, Thailand"
+    }
+  ],
+  "monthly_stats": {
+    "379e0dc5-4c18-47a8-b824-4b895e67151e": [
+      {
+        "month": "2025-05",
+        "views": 0,
+        "downloads": 2
+      }
+    ],
+    "5b53e05a-74b2-43f3-befa-c13b69ab1b0a": [
+      {
+        "month": "2025-05",
+        "views": 2,
+        "downloads": 0
+      }
+    ],
+    "cb8358b0-b1a7-4303-aa7b-ffb9e6607910": [
+      {
+        "month": "2025-05",
+        "views": 2,
+        "downloads": 3
+      }
+    ],
+    "eeeac0ad-56a7-480d-8399-fead8ea9c038": [
+      {
+        "month": "2025-05",
+        "views": 0,
+        "downloads": 2
+      }
+    ],
+    "5ca00e45-e035-492f-9b4d-780212ea100c": [
+      {
+        "month": "2025-05",
+        "views": 0,
+        "downloads": 2
+      }
+    ],
+    "44b0bd72-a348-4a4d-966e-63f5b33f02ac": [
+      {
+        "month": "2025-05",
+        "views": 0,
+        "downloads": 1
+      }
+    ],
+    "36c284e7-fa1f-4ba0-81dc-c2cebef7955f": [
+      {
+        "month": "2025-05",
+        "views": 1,
+        "downloads": 0
+      }
+    ],
+    "4a60d8c9-b54c-48c6-b737-d83c239bd194": [
+      {
+        "month": "2025-05",
+        "views": 1,
+        "downloads": 0
+      }
+    ],
+    "cced48c6-99ad-43a9-af45-f714527fbcc8": [
+      {
+        "month": "2025-05",
+        "views": 1,
+        "downloads": 0
+      }
+    ],
+    "039dacdc-f613-4bee-802a-3b2c295a2591": [
+      {
+        "month": "2025-05",
+        "views": 0,
+        "downloads": 1
+      }
+    ],
+    "951f4b4c-f147-4615-af2b-c54daf66746c": [
+      {
+        "month": "2025-05",
+        "views": 0,
+        "downloads": 1
+      }
+    ],
+    "526b1c48-c552-41d5-adb6-f1c8079b38ed": [
+      {
+        "month": "2025-05",
+        "views": 1,
+        "downloads": 0
+      }
+    ],
+    "fd699a5d-5ce2-4b46-9de8-fe099dda4dbc": [
+      {
+        "month": "2025-05",
+        "views": 1,
+        "downloads": 0
+      }
+    ]
+  },
+  "bot_mapping_sample": [
+    {
+      "ip": "101.47.10.27",
+      "is_bot": false
+    },
+    {
+      "ip": "101.47.5.27",
+      "is_bot": false
+    },
+    {
+      "ip": "101.47.8.8",
+      "is_bot": false
+    },
+    {
+      "ip": "101.47.9.17",
+      "is_bot": false
+    },
+    {
+      "ip": "102.2.38.61",
+      "is_bot": false
+    },
+    {
+      "ip": "102.89.33.126",
+      "is_bot": false
+    },
+    {
+      "ip": "103.14.169.44",
+      "is_bot": false
+    },
+    {
+      "ip": "103.185.224.114",
+      "is_bot": false
+    }
+  ],
+  "pipeline_stages": [
+    {
+      "id": 1,
+      "name": "Load Raw Data",
+      "icon": "\ud83d\udce5",
+      "input": "data_may_01_limit_1000.json",
+      "output": "1000 raw events",
+      "details": [
+        "Loaded 1000 SOLR statistics records",
+        "Found 369 unique IP addresses",
+        "Detected 20 unique publication IDs (owningItem)"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "IP Bot Detection",
+      "icon": "\ud83e\udd16",
+      "input": "369 unique IPs",
+      "output": "bot_mapping (369 entries)",
+      "details": [
+        "Skip-existing: 0 already mapped (first run)",
+        "API calls needed: 369 (under 5000 limit)",
+        "Result: 91 bots, 278 humans"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Filter Clean Records",
+      "icon": "\ud83e\uddf9",
+      "input": "1000 raw events + bot_mapping",
+      "output": "filtered_ips (608 entries)",
+      "details": [
+        "For each raw event, look up IP in bot_mapping",
+        "Drop event if IP is bot",
+        "Kept 608 of 1000 events"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Fetch Publication Metadata",
+      "icon": "\ud83d\udcda",
+      "input": "~20 unique owningItem IDs",
+      "output": "publication, programs, publisher",
+      "details": [
+        "Call repository.unescap.org API per publication ID",
+        "Use cloudscraper to bypass bot challenge",
+        "Extract title, handle, dateIssued, type",
+        "Extract programOfWork, areasOfWork",
+        "Extract publisher, publisherPlace, rights"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Categorize Events",
+      "icon": "\ud83c\udff7\ufe0f",
+      "input": "filtered_ips events",
+      "output": "events tagged VIEW or DOWNLOAD",
+      "details": [
+        "DSpace 7 SOLR rule:",
+        "bundleName contains 'ORIGINAL' \u2192 DOWNLOAD",
+        "otherwise \u2192 VIEW",
+        "Approx split: ~364 downloads, ~243 views"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "Aggregate Stats",
+      "icon": "\ud83d\udcca",
+      "input": "categorized events",
+      "output": "publication_stats + monthly_stats",
+      "details": [
+        "Group by (publication_id, day) \u2192 publication_stats",
+        "Group by (publication_id, year, month) \u2192 monthly_stats",
+        "MongoDB aggregation pipeline with upsert",
+        "Output: 13 monthly_stats rows"
+      ]
+    }
+  ],
+  "totals": {
+    "raw_events": 1000,
+    "unique_ips": 369,
+    "bots": 91,
+    "humans": 278,
+    "publications": 20,
+    "filtered_count": 608
+  }
+};
+
+// ─── SLIDE NAVIGATION ─────────────────────────────────
+const slides = [...document.querySelectorAll(".slide")];
+const total = slides.length;
+let current = 0;
+function go(n){
+  slides[current].classList.remove("active");
+  current = Math.max(0, Math.min(total-1, n));
+  slides[current].classList.add("active");
+  document.getElementById("counter").textContent = `${current+1} / ${total}`;
+  document.getElementById("progressBar").style.width = `${((current+1)/total)*100}%`;
+  const dots = document.getElementById("dots");
+  dots.innerHTML = "";
+  for (let i = 0; i < total; i++) {
+    const d = document.createElement("button");
+    d.className = "dot-nav" + (i === current ? " active" : "");
+    d.addEventListener("click", () => go(i));
+    dots.appendChild(d);
+  }
+  // Lazy-render demos when first visited
+  if (current === 17 && !document.getElementById("botMappingTable").dataset.rendered) renderBotMappingTable();
+  if (current === 20 && !document.getElementById("dailyTable").dataset.rendered) renderDailyTable();
+  if (current === 21 && !document.getElementById("monthlyTable").dataset.rendered) renderMonthlyTable();
+}
+document.getElementById("prev").addEventListener("click", () => go(current-1));
+document.getElementById("next").addEventListener("click", () => go(current+1));
+document.addEventListener("keydown", e => {
+  const tag = document.activeElement?.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+  if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); go(current+1); }
+  if (e.key === "ArrowLeft") go(current-1);
+});
+
+// ─── PIPELINE SIMULATOR (Slide 16) ─────────────────────
+let activeStageIdx = 0;
+let runningAll = false;
+
+function renderPipeStages(){
+  const list = document.getElementById("pipeStagesList");
+  list.innerHTML = MOCK.pipeline_stages.map((st, i) => `
+    <div class="pipe-stage-card${i === activeStageIdx ? ' active' : ''}${i < activeStageIdx ? ' done' : ''}" data-idx="${i}">
+      <div class="pipe-stage-num">STAGE ${st.id}</div>
+      <div class="pipe-stage-icon">${st.icon}</div>
+      <div class="pipe-stage-title">${st.name}</div>
+    </div>
+  `).join("");
+  document.querySelectorAll(".pipe-stage-card").forEach(el => {
+    el.addEventListener("click", () => {
+      activeStageIdx = parseInt(el.dataset.idx);
+      renderPipeStages();
+      renderPipeDetail();
+    });
+  });
+}
+
+function renderPipeDetail(){
+  const st = MOCK.pipeline_stages[activeStageIdx];
+  document.getElementById("pipeDetail").innerHTML = `
+    <div class="pipe-detail-header">
+      <div class="pipe-detail-icon">${st.icon}</div>
+      <div>
+        <div class="pipe-detail-title">Stage ${st.id} — ${st.name}</div>
+        <div class="pipe-detail-sub">// click stages above to navigate · or use the buttons below</div>
+      </div>
+    </div>
+    <div class="pipe-io">
+      <div class="pipe-io-cell">
+        <div class="pipe-io-label">INPUT</div>
+        <div class="pipe-io-val">${st.input}</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-io-cell">
+        <div class="pipe-io-label">OUTPUT</div>
+        <div class="pipe-io-val">${st.output}</div>
+      </div>
+    </div>
+    <ul class="pipe-details-list">
+      ${st.details.map(d => `<li>${d}</li>`).join("")}
+    </ul>
+  `;
+}
+
+document.getElementById("pipePrev").addEventListener("click", () => {
+  if (activeStageIdx > 0) {
+    activeStageIdx--;
+    renderPipeStages();
+    renderPipeDetail();
+  }
+});
+document.getElementById("pipeNext").addEventListener("click", () => {
+  if (activeStageIdx < MOCK.pipeline_stages.length - 1) {
+    activeStageIdx++;
+    renderPipeStages();
+    renderPipeDetail();
+  }
+});
+document.getElementById("pipeReset").addEventListener("click", () => {
+  activeStageIdx = 0;
+  renderPipeStages();
+  renderPipeDetail();
+});
+document.getElementById("pipeRun").addEventListener("click", async () => {
+  if (runningAll) return;
+  runningAll = true;
+  activeStageIdx = 0;
+  renderPipeStages();
+  renderPipeDetail();
+  for (let i = 0; i < MOCK.pipeline_stages.length; i++) {
+    await new Promise(r => setTimeout(r, 900));
+    activeStageIdx = i;
+    renderPipeStages();
+    renderPipeDetail();
+  }
+  runningAll = false;
+});
+
+renderPipeStages();
+renderPipeDetail();
+
+// ─── PUBLICATION SEARCH SIMULATOR (Slide 17) ─────────
+function renderPubIdList(){
+  const list = document.getElementById("pubIdList");
+  list.innerHTML = MOCK.publications.map(p => `
+    <div class="pub-id-item" data-id="${p.id}">${p.id}</div>
+  `).join("");
+  document.querySelectorAll(".pub-id-item").forEach(el => {
+    el.addEventListener("click", () => {
+      document.getElementById("pubInput").value = el.dataset.id;
+      searchPub();
+    });
+  });
+}
+
+function searchPub(){
+  const id = document.getElementById("pubInput").value.trim();
+  document.querySelectorAll(".pub-id-item").forEach(el => {
+    el.classList.toggle("active", el.dataset.id === id);
+  });
+  const pub = MOCK.publications.find(p => p.id === id);
+  const result = document.getElementById("pubResult");
+  if (!pub) {
+    result.innerHTML = `<div style="color:var(--neon-red);">⚠ Publication ID not found.</div><div style="color:var(--soft);margin-top:8px;font-size:11px;">Try clicking one of the IDs from the list.</div>`;
+    return;
+  }
+  const monthly = MOCK.monthly_stats[id] || [];
+  const totalViews = monthly.reduce((s,m) => s + m.views, 0);
+  const totalDl = monthly.reduce((s,m) => s + m.downloads, 0);
+  result.innerHTML = `
+    <div style="color:var(--neon-cyan);font-weight:800;margin-bottom:10px;font-size:13px;">▸ Publication Metadata</div>
+    <div class="pub-meta-row"><div class="pub-meta-key">id</div><div class="pub-meta-val">${pub.id}</div></div>
+    <div class="pub-meta-row"><div class="pub-meta-key">title</div><div class="pub-meta-val">${pub.title}</div></div>
+    <div class="pub-meta-row"><div class="pub-meta-key">handle</div><div class="pub-meta-val">${pub.handle}</div></div>
+    <div class="pub-meta-row"><div class="pub-meta-key">type</div><div class="pub-meta-val">${pub.type}</div></div>
+    <div class="pub-meta-row"><div class="pub-meta-key">dateIssued</div><div class="pub-meta-val">${pub.dateIssued}</div></div>
+    <div class="pub-meta-row"><div class="pub-meta-key">programOfWork</div><div class="pub-meta-val">${pub.programOfWork}</div></div>
+    <div class="pub-meta-row"><div class="pub-meta-key">areaOfWork</div><div class="pub-meta-val">${pub.areaOfWork}</div></div>
+    <div class="pub-meta-row"><div class="pub-meta-key">publisher</div><div class="pub-meta-val">${pub.publisher} · ${pub.publisherPlace}</div></div>
+    ${monthly.length ? `
+      <div style="color:var(--neon-cyan);font-weight:800;margin:14px 0 6px;font-size:13px;">▸ Usage Statistics — ${monthly.length} month(s)</div>
+      <table class="pub-stats-table">
+        <thead><tr><th>Month</th><th style="text-align:right;">Views</th><th style="text-align:right;">Downloads</th></tr></thead>
+        <tbody>
+          ${monthly.map(m => `
+            <tr>
+              <td>${m.month}</td>
+              <td style="text-align:right;" class="views-col">${m.views}</td>
+              <td style="text-align:right;" class="dl-col">${m.downloads}</td>
+            </tr>
+          `).join("")}
+          <tr style="border-top:2px solid rgba(255,176,136,.4);">
+            <td><strong>TOTAL</strong></td>
+            <td style="text-align:right;" class="views-col"><strong>${totalViews}</strong></td>
+            <td style="text-align:right;" class="dl-col"><strong>${totalDl}</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    ` : `<div style="color:var(--soft);margin-top:10px;font-size:11px;">// no usage statistics yet for this publication</div>`}
+  `;
+}
+
+document.getElementById("pubInput").addEventListener("keydown", e => {
+  if (e.key === "Enter") { e.preventDefault(); searchPub(); }
+});
+
+renderPubIdList();
+
+// ─── BOT MAPPING SAMPLE TABLE (Slide 18) ─────────────
+function renderBotMappingTable(){
+  const tbody = document.querySelector("#botMappingTable tbody");
+  if (!tbody) return;
+  tbody.dataset.rendered = "1";
+  tbody.innerHTML = MOCK.bot_mapping_sample.map(row => `
+    <tr>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:12px;">${row.ip}</td>
+      <td style="text-align:center;">
+        <span style="color:${row.is_bot ? 'var(--red)' : 'var(--accent)'};font-weight:800;">
+          ${row.is_bot ? 'BOT' : 'HUMAN'}
+        </span>
+      </td>
+    </tr>
+  `).join("");
+}
+
+// ─── DAILY STATS SAMPLE TABLE (Slide 21) ─────────────
+function renderDailyTable(){
+  const tbody = document.getElementById("dailyTable");
+  if (!tbody) return;
+  tbody.dataset.rendered = "1";
+  // Pull real-ish daily entries from monthly_stats by sampling first 12 pubs
+  const rows = [];
+  MOCK.publications.slice(0, 8).forEach(pub => {
+    const monthly = MOCK.monthly_stats[pub.id] || [];
+    monthly.slice(0, 1).forEach(m => {
+      const day = m.month + "-15";
+      rows.push({
+        pub_id: pub.id,
+        title: pub.title,
+        date: day,
+        views: Math.max(1, Math.round(m.views / 4)),
+        downloads: Math.max(1, Math.round(m.downloads / 4))
+      });
+    });
+  });
+  tbody.innerHTML = rows.slice(0, 10).map(r => `
+    <tr>
+      <td><strong style="font-size:13px;">${r.title}</strong><br/><span style="color:var(--soft);font-family:'JetBrains Mono',monospace;font-size:10px;">${r.pub_id.slice(0,18)}...</span></td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:12px;">${r.date}</td>
+      <td style="text-align:right;font-family:'JetBrains Mono',monospace;color:var(--gold);">${r.views}</td>
+      <td style="text-align:right;font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:700;">${r.downloads}</td>
+    </tr>
+  `).join("");
+}
+
+// ─── MONTHLY STATS TABLE (Slide 22) ──────────────────
+function renderMonthlyTable(){
+  const tbody = document.getElementById("monthlyTable");
+  if (!tbody) return;
+  tbody.dataset.rendered = "1";
+  const rows = [];
+  MOCK.publications.slice(0, 8).forEach(pub => {
+    const monthly = MOCK.monthly_stats[pub.id] || [];
+    monthly.forEach(m => {
+      rows.push({
+        pub_id: pub.id, title: pub.title,
+        month: m.month, views: m.views, downloads: m.downloads
+      });
+    });
+  });
+  rows.sort((a,b) => b.downloads - a.downloads);
+  tbody.innerHTML = rows.slice(0, 12).map(r => `
+    <tr>
+      <td><strong style="font-size:13px;">${r.title}</strong><br/><span style="color:var(--soft);font-family:'JetBrains Mono',monospace;font-size:10px;">${r.pub_id.slice(0,18)}...</span></td>
+      <td style="font-family:'JetBrains Mono',monospace;">${r.month}</td>
+      <td style="text-align:right;font-family:'JetBrains Mono',monospace;color:var(--gold);">${r.views}</td>
+      <td style="text-align:right;font-family:'JetBrains Mono',monospace;color:var(--accent);font-weight:700;">${r.downloads}</td>
+    </tr>
+  `).join("");
+}
+
+// ─── INIT ────────────────────────────────────────────
+go(0);
+</script>
+</body>
+</html>
